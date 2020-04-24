@@ -30,26 +30,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     key_colours.set(Key::X, 255, 0, 0);
     per_key_led.push(key_colours.clone());
 
-    for _ in 0..85 {
-        *key_colours.key(Key::ROG).0 -= 3;
-        *key_colours.key(Key::L).0 -= 3;
-        *key_colours.key(Key::I).0 -= 3;
-        *key_colours.key(Key::N).0 -= 3;
-        *key_colours.key(Key::U).0 -= 3;
-        *key_colours.key(Key::X).0 -= 3;
+    for _ in 0..63 {
+        *key_colours.key(Key::ROG).0 -= 4;
+        *key_colours.key(Key::L).0 -= 4;
+        *key_colours.key(Key::I).0 -= 4;
+        *key_colours.key(Key::N).0 -= 4;
+        *key_colours.key(Key::U).0 -= 4;
+        *key_colours.key(Key::X).0 -= 4;
         per_key_led.push(key_colours.clone());
     }
-    for _ in 0..85 {
-        *key_colours.key(Key::ROG).0 += 3;
-        *key_colours.key(Key::L).0 += 3;
-        *key_colours.key(Key::I).0 += 3;
-        *key_colours.key(Key::N).0 += 3;
-        *key_colours.key(Key::U).0 += 3;
-        *key_colours.key(Key::X).0 += 3;
+    for _ in 0..63 {
+        *key_colours.key(Key::ROG).0 += 4;
+        *key_colours.key(Key::L).0 += 4;
+        *key_colours.key(Key::I).0 += 4;
+        *key_colours.key(Key::N).0 += 4;
+        *key_colours.key(Key::U).0 += 4;
+        *key_colours.key(Key::X).0 += 4;
         per_key_led.push(key_colours.clone());
     }
 
-    let ten_millis = time::Duration::from_millis(1);
+    let time = time::Duration::from_millis(2);
 
     let row = KeyColourArray::get_init_msg();
     let msg =
@@ -59,7 +59,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
         for group in &per_key_led {
             for row in group.get() {
-                thread::sleep(ten_millis);
+                thread::sleep(time);
                 let msg = Message::new_method_call(DBUS_NAME, DBUS_PATH, DBUS_IFACE, "ledmessage")?
                     .append1(row.to_vec());
                 bus.send(msg).unwrap();

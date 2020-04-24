@@ -19,6 +19,8 @@ pub(super) struct LaptopGX502 {
     supported_modes: [BuiltInModeByte; 12],
     backlight: Backlight,
     per_key_led: Vec<KeyColourArray>,
+    led_iface_num: i32,
+    cons_iface_num: i32,
 }
 
 impl LaptopGX502 {
@@ -71,8 +73,8 @@ impl LaptopGX502 {
             //from `lsusb -vd 0b05:1866`
             key_endpoint: 0x83,
             supported_modes: [
-                BuiltInModeByte::Stable,
-                BuiltInModeByte::Breathe,
+                BuiltInModeByte::Single,
+                BuiltInModeByte::Breathing,
                 BuiltInModeByte::Cycle,
                 BuiltInModeByte::Rainbow,
                 BuiltInModeByte::Rain,
@@ -86,13 +88,16 @@ impl LaptopGX502 {
             ],
             backlight: Backlight::new("intel_backlight").unwrap(),
             per_key_led,
+            led_iface_num: 1,
+            cons_iface_num: 2,
         }
     }
 }
 
 impl LaptopGX502 {
     fn do_keypress_actions(&self, rogcore: &mut RogCore) -> Result<(), AuraError> {
-        if let Some(key_buf) = rogcore.poll_keyboard(&self.report_filter_bytes) {
+        let input = rogcore.poll_keyboard(&self.report_filter_bytes)?;
+        if let Some(key_buf) = input {
             match GX502Keys::from(key_buf[1]) {
                 GX502Keys::LedBrightUp => {
                     rogcore.aura_bright_inc(&self.supported_modes, self.max_led_bright)?;
@@ -165,6 +170,12 @@ impl Laptop for LaptopGX502 {
     }
     fn prod_family(&self) -> &str {
         &self.prod_family
+    }
+    fn led_iface_num(&self) -> i32 {
+        self.led_iface_num
+    }
+    fn cons_iface_num(&self) -> i32 {
+        self.cons_iface_num
     }
 }
 

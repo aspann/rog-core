@@ -2,7 +2,7 @@ use crate::aura::BuiltInModeByte;
 use crate::core::RogCore;
 use crate::error::AuraError;
 //use keycode::{KeyMap, KeyMappingId, KeyState, KeyboardState};
-use log::info;
+use log::{error, info};
 
 // GL753VE == 0x1854, 4 zone keyboard
 mod gl753;
@@ -13,20 +13,27 @@ mod gx502;
 use gx502::LaptopGX502;
 
 pub(crate) fn match_laptop() -> Box<dyn Laptop> {
-    for device in rusb::devices().unwrap().iter() {
-        let device_desc = device.device_descriptor().unwrap();
-        if device_desc.vendor_id() == 0x0b05 {
-            match device_desc.product_id() {
-                0x1866 => {
-                    info!("Found GX502 or similar");
-                    return Box::new(LaptopGX502::new());
+    match hidapi::HidApi::new() {
+        Ok(api) => {
+            for device in api.device_list() {
+                if device.vendor_id() == 0x0b05 {
+                    match device.product_id() {
+                        0x1866 => {
+                            info!("Found GX502 or similar");
+                            return Box::new(LaptopGX502::new());
+                        }
+                        0x1854 => {
+                            info!("Found GL753 or similar");
+                            return Box::new(LaptopGL753::new());
+                        }
+                        _ => {}
+                    }
                 }
-                0x1854 => {
-                    info!("Found GL753 or similar");
-                    return Box::new(LaptopGL753::new());
-                }
-                _ => {}
             }
+        }
+        Err(e) => {
+            error!("Error: {}", e);
+            panic!("could not match laptop");
         }
     }
     panic!("could not match laptop");
@@ -71,4 +78,6 @@ pub(crate) trait Laptop {
     fn usb_vendor(&self) -> u16;
     fn usb_product(&self) -> u16;
     fn supported_modes(&self) -> &[BuiltInModeByte];
+    fn led_iface_num(&self) -> i32;
+    fn cons_iface_num(&self) -> i32;
 }

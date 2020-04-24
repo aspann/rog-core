@@ -18,6 +18,8 @@ pub(super) struct LaptopGL753 {
     key_endpoint: u8,
     supported_modes: [BuiltInModeByte; 3],
     backlight: Backlight,
+    led_iface_num: i32,
+    cons_iface_num: i32,
 }
 
 impl LaptopGL753 {
@@ -37,18 +39,21 @@ impl LaptopGL753 {
             //from `lsusb -vd 0b05:1866`
             key_endpoint: 0x83,
             supported_modes: [
-                BuiltInModeByte::Stable,
-                BuiltInModeByte::Breathe,
+                BuiltInModeByte::Single,
+                BuiltInModeByte::Breathing,
                 BuiltInModeByte::Cycle,
             ],
             backlight: Backlight::new("intel_backlight").unwrap(),
+            led_iface_num: 1,
+            cons_iface_num: 2,
         }
     }
 }
 
 impl LaptopGL753 {
     fn do_keypress_actions(&self, rogcore: &mut RogCore) -> Result<(), AuraError> {
-        if let Some(key_buf) = rogcore.poll_keyboard(&self.report_filter_bytes) {
+        let input = rogcore.poll_keyboard(&self.report_filter_bytes)?;
+        if let Some(key_buf) = input {
             match GL753Keys::from(key_buf[1]) {
                 GL753Keys::LedBrightUp => {
                     rogcore.aura_bright_inc(&self.supported_modes, self.max_led_bright)?;
@@ -112,6 +117,12 @@ impl Laptop for LaptopGL753 {
     }
     fn prod_family(&self) -> &str {
         &self.prod_family
+    }
+    fn led_iface_num(&self) -> i32 {
+        self.led_iface_num
+    }
+    fn cons_iface_num(&self) -> i32 {
+        self.cons_iface_num
     }
 }
 

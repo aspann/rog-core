@@ -13,7 +13,7 @@ name = "rog-core"
 path = "src/main.rs"
 
 [dependencies]
-rusb = "^0.5.5"
+hidapi = "^1.2"
 gumdrop = "^0.8.0"
 dbus = "^0.8.2"
 serde = "1.0"
