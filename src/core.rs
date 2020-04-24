@@ -126,10 +126,14 @@ impl RogCore {
     }
 
     pub fn aura_write(&mut self, message: &[u8]) -> Result<(), AuraError> {
+        let now = std::time::Instant::now();
         if let Some(aura) = &self.dev_leds {
             aura.write(message)
                 .map_err(|err| AuraError::UsbError(err))?;
         }
+        let after = std::time::Instant::now();
+        let diff = after.duration_since(now);
+        dbg!(diff.as_micros());
         Ok(())
     }
 
