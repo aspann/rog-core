@@ -12,6 +12,7 @@ use std::process::Command;
 use std::ptr::NonNull;
 use std::str::FromStr;
 use std::time::Duration;
+use std::thread;
 
 static FAN_TYPE_1_PATH: &str = "/sys/devices/platform/asus-nb-wmi/throttle_thermal_policy";
 static FAN_TYPE_2_PATH: &str = "/sys/devices/platform/asus-nb-wmi/fan_boost_mode";
@@ -38,9 +39,18 @@ impl RogCore {
             error!("Could not get keyboard device handle: {:?}", err);
             err
         })?;
+        // reset the device during init
         dev_handle.reset()?;
-        dev_handle.set_active_configuration(0).unwrap_or(());
+        thread::sleep(Duration::from_millis(200));
 
+        // reassign handle
+        dev_handle = RogCore::get_device(vendor, product).map_err(|err| {
+            error!("Could not get keyboard device handle after reset: {:?}", err);
+            err
+        })?;
+
+        // setting active configuration
+        dev_handle.set_active_configuration(0).unwrap_or(());
         let dev_config = dev_handle.device().config_descriptor(0).map_err(|err| {
             error!("Could not get keyboard device config: {:?}", err);
             err
@@ -77,6 +87,7 @@ impl RogCore {
             warn!("Trying to detach kernel driver then retry");
             if let Ok(active) = dev_handle.kernel_driver_active(interface) {
                 if active {
+                    dev_handle.reset()?;
                     dev_handle.detach_kernel_driver(interface).map_err(|err| {
                         warn!("Could not detach kernel driver: {:?}", err);
                         err
